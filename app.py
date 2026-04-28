@@ -1,7 +1,17 @@
 # importação
 from flask import Flask
-
+from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
+
+db = SQLAlchemy(app)
+
+# definindo o modelo de dados para os produtos. no meu produto tem (id, name, price e description)
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)    # nullable= False significa que o campo é obrigatório. diz se é opcional ou nao(se for true, diz que nullable é opcional)
+    price = db.Column(db.Float, nullable=False)
+    description = db.Column(db.Text, nullable=True)
 
 # definir uma rota raiz (initial page) e a function que sera executada ao requisitar
 @app.route('/')
