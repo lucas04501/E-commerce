@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_login import UserMixin, login_user, LoginManager, login_required
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
@@ -28,6 +28,11 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
 
+#autenticação de usuário usando flask-login. a função load_user é usada para carregar um usuário a partir do seu id. ela é decorada com @login_manager.user_loader, o que indica que esta função será usada para carregar o usuário quando necessário.
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -39,6 +44,12 @@ def login():
             login_user(user)
             return jsonify({'message': 'Login successful'})
     return jsonify({'message': 'Invalid credentials'}), 401
+
+@app.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({'message': 'Logged out successfully'})
 
 @app.route('/api/products/add' , methods=['POST'])
 @login_required
