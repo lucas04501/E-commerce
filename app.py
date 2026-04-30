@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_login import UserMixin, login_user, LoginManager
+from flask_login import UserMixin, login_user, LoginManager, login_required
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
@@ -41,6 +41,7 @@ def login():
     return jsonify({'message': 'Invalid credentials'}), 401
 
 @app.route('/api/products/add' , methods=['POST'])
+@login_required
 def add_product():
     data = request.json
     if 'name' in data and 'price' in data:
@@ -51,6 +52,7 @@ def add_product():
     return jsonify({'message': 'Invalid product data'}), 400
 
 @app.route('/api/products/delete/<int:product_id>', methods=['DELETE'])
+@login_required
 def delete_product(product_id):
     product = Product.query.get(product_id)
     # recuperar o produto da base de dados usando o id fornecido. se o produto existir, ele é deletado e a mudança é salva no banco de dados. se o produto não for encontrado, uma mensagem de erro é retornada.
@@ -65,6 +67,7 @@ def delete_product(product_id):
     return jsonify({'message': 'Product not found'}), 404
 
 @app.route('/api/products/<int:product_id>', methods=['GET'])
+@login_required
 def get_product(product_id):
     product = Product.query.get(product_id)
     if product:
@@ -77,6 +80,7 @@ def get_product(product_id):
     return jsonify({'message': 'Product not found'}), 404
 
 @app.route('/api/products/update/<int:product_id>', methods=['PUT'])
+@login_required
 def update_product(product_id):
     product = Product.query.get(product_id)
     if not product:
