@@ -2,13 +2,18 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_login import UserMixin
+from flask_login import UserMixin, login_user, LoginManager
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
+app.config['SECRET_KEY'] = 'minha-chave-secreta'
 
+login_manager = LoginManager()
 db = SQLAlchemy(app)
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 CORS(app)
+
 
 # User (id, username, email, password)
 class User(db.Model, UserMixin):
@@ -31,6 +36,7 @@ def login():
 
     user = User.query.filter_by(username=data.get('username')).first()
     if user and data.get('password') == user.password:
+            login_user(user)
             return jsonify({'message': 'Login successful'})
     return jsonify({'message': 'Invalid credentials'}), 401
 
