@@ -23,6 +23,16 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.query.filter_by(username=data.get('username')).first()
+    if user and data.get('password') == user.password:
+            return jsonify({'message': 'Login successful'})
+    return jsonify({'message': 'Invalid credentials'}), 401
 
 @app.route('/api/products/add' , methods=['POST'])
 def add_product():
