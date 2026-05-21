@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
@@ -20,6 +20,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    cart = db.relationship("CartItem", backref="user", lazy=True)
 
 # definindo o modelo de dados para os produtos. no meu produto tem (id, name, price e description)
 class Product(db.Model):
@@ -27,6 +28,11 @@ class Product(db.Model):
     name = db.Column(db.String(120), nullable=False)    # nullable= False significa que o campo é obrigatório. diz se é opcional ou nao(se for true, diz que nullable é opcional)
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
+
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False)
 
 #autenticação de usuário usando flask-login. a função load_user é usada para carregar um usuário a partir do seu id. ela é decorada com @login_manager.user_loader, o que indica que esta função será usada para carregar o usuário quando necessário.
 @login_manager.user_loader
@@ -121,10 +127,12 @@ def get_products():
         products_list.append(product_data)
     return jsonify(products_list)
 
-# definir uma rota raiz (initial page) e a function que sera executada ao requisitar
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
+# checkout
+@app.route("api/cart/add/<int:product_id>", methods=["POST"])
+@login_required
+def add_to_cart(product_id):
+    # usuario
+    # produto
 
 if __name__ == '__main__':
     app.run(debug=True)
