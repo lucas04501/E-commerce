@@ -1,79 +1,63 @@
-# 🛒 E-commerce API (Flask & Python)
+# API de e-commerce (Python e Flask)
 
-Esta API simula o backend completo de um sistema de e-commerce. Desenvolvida com **Python** e o framework **Flask**, a aplicação gerencia desde a autenticação de usuários até o fluxo de compras, permitindo a manipulação de produtos e a organização de um carrinho virtual.
+Projeto de estudo: o backend de uma loja virtual feito com **Python** e **Flask**. Hoje a API já faz login e logout, gerencia o catálogo de produtos (cadastrar, listar, ver, atualizar e remover) e adiciona produtos ao carrinho do usuário logado. Busca, consulta e remoção de itens do carrinho, finalização da compra e documentação Swagger ainda **não** estão implementadas (ver "Próximos passos").
 
----
+## O que funciona hoje
 
-## 📌 Funcionalidades Principais
+* **Autenticação:** login e logout com sessão, usando Flask-Login.
+* **Catálogo:** listagem pública de produtos; detalhe, cadastro, atualização e remoção exigem login.
+* **Carrinho:** adicionar um produto ao carrinho do usuário logado.
+* **Dados:** SQLite com SQLAlchemy (usuário, produto e item de carrinho).
 
-* **Gestão de Identidade:** Sistema de login e logout com controle de sessão.
-* **Catálogo Dinâmico:** Listagem completa, busca por palavras-chave e visualização de detalhes de produtos.
-* **Operações Administrativas:** Suporte completo para Criar, Atualizar e Deletar produtos (CRUD).
-* **Fluxo de Consumo:** Adição de itens ao carrinho, visualização de itens selecionados e processo de checkout.
+## Como rodar
 
----
+Requer Python 3.10 ou superior.
 
-## 🛠️ Tecnologias e Arquitetura
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate    |    Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
 
-* **Linguagem:** Python 3.x
-* **Framework:** Flask
-* **Documentação:** Swagger 2.0
-* **Ambiente:** Host local (127.0.0.1:5000)
+A API sobe em `http://127.0.0.1:5000` e cria o banco (`instance/ecommerce.db`) na primeira execução. Para ligar o modo de depuração, use `FLASK_DEBUG=1`. A chave de sessão vem de `SECRET_KEY` (sem ela, vale um valor só para desenvolvimento).
 
----
+### Criar um usuário para testar
 
-## 🗄️ Arquitetura de Dados
+Ainda não existe rota de cadastro. Crie um usuário pelo shell do Flask:
 
-O projeto utiliza um modelo relacional para gerenciar as informações do e-commerce. A estrutura de objetos definida segue esta lógica:
+```bash
+flask --app app shell
+>>> from app import db, User
+>>> db.session.add(User(username="teste", password="uma-senha-de-teste")); db.session.commit()
+```
 
-* **Relacionamento Usuário-Carrinho:** Cada usuário possui um carrinho (`cart`) que armazena uma lista de itens.
-* **Entidade de Produto:** Armazena os dados fundamentais como `id`, `name`, `price` e `description`.
-* **Vínculo de Transação (CartItem):** Atua como a ponte entre o usuário (`user_id`) e o produto (`product_id`), permitindo o rastreamento de quais itens pertencem a cada conta.
+Depois faça `POST /login` com `{"username": "teste", "password": "uma-senha-de-teste"}`. As rotas protegidas redirecionam para `/login` quando não há sessão.
 
----
+## Endpoints implementados
 
-## 🛣️ Documentação dos Endpoints
+| Método | Endpoint | Login | Descrição |
+| :--- | :--- | :---: | :--- |
+| `POST` | `/login` | não | Autentica (`username` e `password`). |
+| `POST` | `/logout` | sim | Encerra a sessão. |
+| `GET` | `/api/products` | não | Lista os produtos (`id`, `name`, `price`). |
+| `GET` | `/api/products/{id}` | sim | Detalhe de um produto. |
+| `POST` | `/api/products/add` | sim | Cadastra um produto (`name`, `price`, `description` opcional). |
+| `PUT` | `/api/products/update/{id}` | sim | Atualiza campos de um produto. |
+| `DELETE` | `/api/products/delete/{id}` | sim | Remove um produto. |
+| `POST` | `/api/cart/add/{id}` | sim | Adiciona o produto ao carrinho do usuário logado. |
 
-Abaixo estão as rotas mapeadas conforme a estrutura da API:
+## Modelo de dados
 
-### 🔐 Autenticação
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| `POST` | `/login` | Autentica o usuário (exige `username` e `password`). |
-| `POST` | `/logout` | Encerra a sessão do usuário atual. |
+* **User:** `id`, `username`, `password` e a relação `cart`.
+* **Product:** `id`, `name`, `price`, `description`.
+* **CartItem:** liga um usuário (`user_id`) a um produto (`product_id`).
 
-### 📦 Catálogo de Produtos
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| `GET` | `/api/products` | Lista todos os produtos disponíveis. |
-| `GET` | `/api/products/{id}` | Retorna detalhes técnicos de um produto específico. |
-| `GET` | `/api/products/search` | Busca produtos via query string (`?q=nome`). |
-| `POST` | `/api/products/add` | Adiciona um novo produto ao catálogo. |
-| `PUT` | `/api/products/update/{id}` | Atualiza as informações de um produto existente. |
-| `DELETE` | `/api/products/delete/{id}` | Remove permanentemente um produto do sistema. |
+## Próximos passos
 
-### 🛍️ Carrinho & Checkout
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| `GET` | `/api/cart` | Exibe o conteúdo atual do carrinho do usuário. |
-| `POST` | `/api/cart/add/{id}` | Adiciona um item específico ao carrinho. |
-| `DELETE` | `/api/cart/remove/{id}` | Remove um item do carrinho através do seu ID de item. |
-| `POST` | `/api/cart/checkout` | Finaliza a compra e limpa o carrinho. |
-
----
-
-## 🏗️ Modelos de Dados (Schema)
-
-A API trabalha com três entidades principais:
-
-* **User:** ID, username, password e lista de itens no carrinho.
-* **Product:** ID, nome, preço e descrição.
-* **CartItem:** ID único do item, ID do usuário (`user_id`) e ID do produto (`product_id`).
-
----
-
-## 🚀 Como testar
-
-1. Certifique-se de ter o **Python** e o **Flask** instalados.
-2. Inicie o servidor local através do VS Code ou terminal.
-3. Utilize ferramentas como **Postman** ou **Insomnia** para realizar as requisições para `http://127.0.0.1:5000`.
+* Busca de produtos por palavra-chave.
+* Consultar o carrinho e remover itens.
+* Finalizar a compra (checkout). O projeto ainda não tem integração com pagamento.
+* Cadastro de usuários e senhas com hash (hoje a senha é guardada e comparada em texto puro: é um projeto de estudo, não use em produção).
+* Documentação da API (Swagger).
+* Testes automatizados.
