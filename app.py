@@ -1,4 +1,5 @@
 # importação
+import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -6,7 +7,8 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
-app.config['SECRET_KEY'] = 'minha-chave-secreta'
+# a chave vem do ambiente; o valor padrão serve só para desenvolvimento local
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-only-change-me')
 
 login_manager = LoginManager()
 db = SQLAlchemy(app)
@@ -127,13 +129,20 @@ def get_products():
         products_list.append(product_data)
     return jsonify(products_list)
 
-# checkout
-@app.route("api/cart/add/<int:product_id>", methods=["POST"])
+# carrinho: adiciona um produto ao carrinho do usuário logado
+@app.route("/api/cart/add/<int:product_id>", methods=["POST"])
 @login_required
 def add_to_cart(product_id):
-    # usuario
-    # produto
+    # usuario: current_user | produto: buscado pelo id
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'message': 'Product not found'}), 404
+    db.session.add(CartItem(user_id=current_user.id, product_id=product.id))
+    db.session.commit()
+    return jsonify({'message': 'Item added to the cart successfully'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    with app.app_context():
+        db.create_all()  # cria as tabelas na primeira execução
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
 
